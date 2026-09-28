@@ -1,3 +1,21 @@
+/* Preciado matrix blue glass — shared tokens for DOM chrome. */
+:root {
+  --bg: #04060a;
+  --cyan: #5ce1f2;
+  --cyan-deep: #2ba7c4;
+  --blue: #6aa6ff;
+  --text: #e9f2f7;
+  --text-dim: #9db0c0;
+  --text-faint: #67798a;
+  --line: rgba(120, 214, 240, 0.14);
+  --glass: rgba(96, 168, 200, 0.05);
+  --glass-strong: rgba(96, 168, 200, 0.09);
+  --blur: blur(22px) saturate(150%);
+  --glow: 0 0 0 1px rgba(92, 225, 242, 0.1), 0 18px 60px -28px rgba(92, 225, 242, 0.42);
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -9,6 +27,103 @@ body,
 #root {
   width: 100%;
   height: 100%;
-  background: #000;
+  background: var(--bg);
   overflow: hidden;
+}
+
+/* Glass panel recipe: wash + hairline + top-edge light catch + blur. */
+.glass {
+  position: relative;
+  border: 1px solid var(--line);
+  background: var(--glass);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  box-shadow: var(--glow);
+}
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(150, 240, 255, 0.42) 20%, rgba(150, 240, 255, 0.14) 55%, transparent);
+  pointer-events: none;
+}
+
+/* Boot overlay */
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(90% 70% at 50% 45%, #071018 0%, var(--bg) 70%);
+  color: var(--cyan);
+  font-family: var(--mono);
+  transition: opacity 0.9s ease, visibility 0.9s;
+}
+.boot.done {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.boot canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.55;
+  -webkit-mask-image: radial-gradient(70% 60% at 50% 50%, transparent 20%, #000 100%);
+  mask-image: radial-gradient(70% 60% at 50% 50%, transparent 20%, #000 100%);
+}
+.boot-panel {
+  position: relative;
+  width: min(420px, calc(100vw - 32px));
+  padding: 22px 24px;
+  border-radius: 16px;
+  font-size: 12px;
+  line-height: 1.9;
+  letter-spacing: 0.04em;
+}
+.boot-brand {
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.boot-brand span { color: var(--cyan); }
+.boot-line { color: var(--text-dim); }
+.boot-line b { color: var(--cyan); font-weight: 500; }
+.boot-bar {
+  margin-top: 14px;
+  height: 2px;
+  background: rgba(120, 214, 240, 0.12);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.boot-bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--cyan-deep), var(--cyan));
+  box-shadow: 0 0 12px var(--cyan);
+  transition: width 0.25s ease-out;
+}
+.boot-skip {
+  margin-top: 12px;
+  font: inherit;
+  font-size: 10px;
+  color: var(--text-faint);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.boot-skip:hover { color: var(--cyan); }
+
+@media (prefers-reduced-motion: reduce) {
+  .boot, .boot-bar i { transition-duration: 0.01s; }
+  .boot canvas { display: none; }
 }

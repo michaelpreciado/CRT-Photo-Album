@@ -46,34 +46,44 @@ const WallpaperShader = {
       );
     }
 
+    // Blocky pseudo-glyph: 3x5 random pixel grid inside a cell.
+    float glyph(vec2 cell, vec2 f, float seed) {
+      vec2 g = floor(f * vec2(3.0, 5.0));
+      float on = step(0.5, hash(cell + g * 7.31 + seed));
+      vec2 m = abs(fract(f * vec2(3.0, 5.0)) - 0.5);
+      return on * step(max(m.x, m.y), 0.36);
+    }
+
     void main() {
       vec2 uv = vUv;
+      vec3 bg = vec3(0.016, 0.024, 0.04);
+      // Lit cyan bloom centre + deep-blue falloff
+      float d = length((uv - vec2(0.5, 0.55)) * vec2(1.0, 1.15));
+      vec3 col = bg + vec3(0.02, 0.09, 0.13) * smoothstep(0.75, 0.0, d);
 
-      // Sky gradient
-      vec3 skyTop = vec3(0.13, 0.38, 0.82);
-      vec3 skyHorizon = vec3(0.62, 0.82, 0.96);
-      vec3 col = mix(skyHorizon, skyTop, smoothstep(0.35, 1.0, uv.y));
+      // Glyph rain: columns of falling cells, brightest at the head
+      vec2 grid = vec2(46.0, 38.0);
+      vec2 p = uv * grid;
+      vec2 cell = floor(p);
+      vec2 f = fract(p);
+      float colId = cell.x;
+      float speed = 0.05 + 0.09 * hash(vec2(colId, 1.0));
+      float head = fract(time * speed + hash(vec2(colId, 9.0)));
+      float y = cell.y / grid.y;
+      float dist = mod(head - y + 1.0, 1.0); // 0 at head, grows up the trail
+      float trail = smoothstep(0.42, 0.0, dist) * step(0.02, hash(vec2(colId, 4.0)) );
+      float flick = step(0.35, hash(cell + floor(time * 4.0 * hash(cell))));
+      float g = glyph(cell, f, floor(time * 1.5 + hash(cell) * 6.0));
+      float rain = g * trail * flick;
+      vec3 rainCol = mix(vec3(0.17, 0.65, 0.77), vec3(0.36, 0.88, 0.95), smoothstep(0.1, 0.0, dist));
+      rainCol = mix(rainCol, vec3(0.91, 0.95, 0.97), smoothstep(0.02, 0.0, dist));
+      // Keep the centre calmer so windows/icons stay legible
+      float calm = mix(0.35, 1.0, smoothstep(0.15, 0.6, abs(uv.x - 0.5)));
+      col += rainCol * rain * 0.55 * calm;
 
-      // Sun with soft glow
-      float sun = length(uv - vec2(0.78, 0.82));
-      col += vec3(1.0, 0.95, 0.72) * smoothstep(0.35, 0.0, sun) * 0.55;
-      col = mix(col, vec3(1.0, 0.99, 0.88), smoothstep(0.07, 0.05, sun));
-
-      // Drifting clouds
-      float c = noise(uv * vec2(4.0, 8.0) + vec2(time * 0.01, 0.0));
-      c += 0.5 * noise(uv * vec2(9.0, 18.0) + vec2(time * 0.02, 3.0));
-      float clouds = smoothstep(0.78, 1.05, c) * smoothstep(0.38, 0.6, uv.y);
-      col = mix(col, vec3(1.0), clouds * 0.85);
-
-      // Rolling green hills
-      float hill1 = 0.34 + 0.06 * sin(uv.x * 4.5 + 0.8);
-      float hill2 = 0.24 + 0.05 * sin(uv.x * 3.2 + 2.9);
-      vec3 grassLight = vec3(0.45, 0.76, 0.22);
-      vec3 grassDark = vec3(0.25, 0.55, 0.13);
-      float h1 = smoothstep(hill1 + 0.004, hill1, uv.y);
-      float h2 = smoothstep(hill2 + 0.004, hill2, uv.y);
-      col = mix(col, grassLight * (0.85 + 0.3 * uv.y), h1);
-      col = mix(col, grassDark * (0.9 + 0.4 * uv.y), h2);
+      // Faint perspective grid horizon
+      float gl = smoothstep(0.02, 0.0, abs(fract(uv.x * 20.0) - 0.5) - 0.48) * 0.5;
+      col += vec3(0.05, 0.16, 0.2) * gl * smoothstep(0.28, 0.0, uv.y) * 0.6;
 
       gl_FragColor = vec4(col, 1.0);
     }
@@ -165,39 +175,43 @@ export default function Desktop({ clickTrigger, uploadedImages }) {
       <group ref={cursorRef} position={[0, 0, 2]}>
         <mesh rotation={[0, 0, Math.PI / 4]}>
           <coneGeometry args={[0.08, 0.25, 3]} />
-          <meshBasicMaterial color="white" depthTest={false} />
+          <meshBasicMaterial color="#5ce1f2" depthTest={false} />
         </mesh>
         <mesh position={[0.02, -0.02, 0]} rotation={[0, 0, Math.PI / 4]}>
           <coneGeometry args={[0.06, 0.2, 3]} />
-          <meshBasicMaterial color="black" depthTest={false} />
+          <meshBasicMaterial color="#04060a" depthTest={false} />
         </mesh>
       </group>
 
-      {/* Taskbar */}
+      {/* Taskbar — glass strip with a cyan hairline */}
       <mesh position={[0, -2.14, 0.1]}>
         <planeGeometry args={[10, 0.38]} />
-        <meshBasicMaterial color="#245edb" />
+        <meshBasicMaterial color="#07121a" />
       </mesh>
-      <mesh position={[0, -1.96, 0.11]}>
-        <planeGeometry args={[10, 0.04]} />
-        <meshBasicMaterial color="#5c8ef0" />
+      <mesh position={[0, -1.95, 0.11]}>
+        <planeGeometry args={[10, 0.012]} />
+        <meshBasicMaterial color="#5ce1f2" transparent opacity={0.55} />
       </mesh>
 
       {/* Start button */}
       <mesh position={[-2.25, -2.14, 0.11]}>
-        <planeGeometry args={[0.95, 0.32]} />
-        <meshBasicMaterial color="#3d8c3d" />
+        <planeGeometry args={[0.95, 0.3]} />
+        <meshBasicMaterial color="#0c2a35" />
       </mesh>
-      <Text font={OS_FONT} position={[-2.25, -2.14, 0.12]} fontSize={0.17} color="white" anchorX="center">
+      <mesh position={[-2.25, -2.14, 0.115]}>
+        <planeGeometry args={[0.93, 0.28]} />
+        <meshBasicMaterial color="#0a1c26" />
+      </mesh>
+      <Text font={OS_FONT} position={[-2.25, -2.14, 0.12]} fontSize={0.17} color="#5ce1f2" anchorX="center" anchorY="middle">
         Start
       </Text>
 
       {/* Clock tray */}
       <mesh position={[2.2, -2.14, 0.11]}>
-        <planeGeometry args={[1.05, 0.32]} />
-        <meshBasicMaterial color="#184ba5" />
+        <planeGeometry args={[1.05, 0.3]} />
+        <meshBasicMaterial color="#0a1c26" />
       </mesh>
-      <Text font={OS_FONT} position={[2.2, -2.14, 0.12]} fontSize={0.14} color="white" anchorX="center">
+      <Text font={OS_FONT} position={[2.2, -2.14, 0.12]} fontSize={0.14} color="#9db0c0" anchorX="center" anchorY="middle">
         {time}
       </Text>
     </group>

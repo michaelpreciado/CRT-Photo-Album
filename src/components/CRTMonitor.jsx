@@ -6,6 +6,7 @@ import Desktop from './OS/Desktop'
 import { CRTEffectShader } from './shaders/CRTEffectShader'
 import { useAppStore } from '../store/useAppStore'
 
+const BASE_BRIGHTNESS = 1.18
 const CASE_COLOR = new Color('#cdc9b4')
 const CASE_COLOR_DIM = new Color('#55524a')
 const BEZEL_COLOR = new Color('#d8d4c0')
@@ -18,11 +19,18 @@ export default function CRTMonitor({ position, uploadedImages }) {
   const caseMatRef = useRef()
   const bezelMatRef = useRef()
   const dimRef = useRef(0)
+  const onRef = useRef(0)
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime
     if (materialRef.current) {
-      materialRef.current.uniforms.time.value = t
+      const u = materialRef.current.uniforms
+      u.time.value = t
+      // CRT power-on: phosphor warms up after boot with a brief overshoot
+      const booted = useAppStore.getState().booted
+      onRef.current = booted ? Math.min(1, onRef.current + delta * 1.3) : 0
+      const k = onRef.current
+      u.brightness.value = BASE_BRIGHTNESS * (k < 1 ? 1 - Math.pow(1 - k, 3) : 1) * (1 + 0.6 * Math.sin(k * Math.PI) * (1 - k))
     }
 
     // Screen light flickers in sync with the shader's mains hum
@@ -128,7 +136,7 @@ export default function CRTMonitor({ position, uploadedImages }) {
         intensity={1.4}
         distance={3.5}
         decay={2}
-        color="#9fc4ff"
+        color="#7fd8ff"
       />
 
       {/* Bottom control panel */}
@@ -154,7 +162,7 @@ export default function CRTMonitor({ position, uploadedImages }) {
       {/* Power LED */}
       <mesh position={[0.95, -1.02, 0.325]} rotation={[Math.PI / 2, 0, 0]}>
         <cylinderGeometry args={[0.035, 0.035, 0.02, 12]} />
-        <meshStandardMaterial color="#0c2a0c" emissive="#39ff5a" emissiveIntensity={2.2} toneMapped={false} />
+        <meshStandardMaterial color="#06222a" emissive="#5ce1f2" emissiveIntensity={2.2} toneMapped={false} />
       </mesh>
 
       {/* Side vents */}

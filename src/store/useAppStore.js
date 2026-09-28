@@ -18,6 +18,7 @@ export const useAppStore = create((set) => ({
   selectedImage: null,
   images: [],
   saving: false,
+  booted: false,
 
   cursor: { x: 0, y: 0 },
 
@@ -31,6 +32,7 @@ export const useAppStore = create((set) => ({
   closePhoto: () => set({ viewMode: 'gallery', selectedImage: null }),
 
   setSaving: (saving) => set({ saving }),
+  setBooted: () => set({ booted: true }),
 }))
 
 // Handy for debugging and end-to-end tests.

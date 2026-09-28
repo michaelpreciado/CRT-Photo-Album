@@ -1,58 +1,57 @@
 import { Canvas } from '@react-three/fiber'
 import { Suspense, useState, useEffect, useCallback } from 'react'
 import { ACESFilmicToneMapping } from 'three'
-import { Loader, PerformanceMonitor } from '@react-three/drei'
+import { PerformanceMonitor } from '@react-three/drei'
 import styled, { createGlobalStyle } from 'styled-components'
 import Scene from './components/Scene'
+import Boot from './components/Boot'
 import { useAppStore } from './store/useAppStore'
 import { exportCRTImage } from './utils/exportCRTImage'
 
 const GlobalStyle = createGlobalStyle`
   body {
-    font-family: 'Inter', sans-serif;
-    background: #050505;
+    font-family: var(--sans);
+    background: var(--bg);
     overscroll-behavior: none;
   }
 `
 
 const UIContainer = styled.div`
   position: absolute;
-  top: 40px;
-  left: 40px;
+  top: 32px;
+  left: 32px;
   z-index: 10;
-  color: white;
+  color: var(--text);
   pointer-events: none;
+  transition: opacity 0.4s ease;
+  opacity: ${(p) => (p.$dim ? 0.15 : 1)};
 
   @media (max-width: 768px) {
     top: auto;
-    bottom: 20px;
-    left: 20px;
-    right: 20px;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    left: 16px;
+    right: 16px;
     display: flex;
     justify-content: center;
   }
 `
 
-const Card = styled.div`
-  background: rgba(20, 20, 20, 0.6);
-  padding: 24px;
+const Card = styled.div.attrs({ className: 'glass' })`
+  padding: 22px;
   border-radius: 16px;
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
   pointer-events: auto;
   max-width: 320px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.3s ease, border-color 0.3s ease;
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    border-color: rgba(120, 214, 240, 0.3);
   }
 
   @media (max-width: 768px) {
     width: 100%;
     max-width: none;
-    padding: 16px;
+    padding: 14px;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -71,86 +70,96 @@ const Title = styled.h1`
   font-size: 20px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  background: linear-gradient(to right, #fff, #ccc);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text);
 `
 
 const Description = styled.p`
-  margin: 0 0 20px 0;
+  margin: 0 0 18px 0;
   font-size: 13px;
-  line-height: 1.5;
-  color: #888;
+  line-height: 1.55;
+  color: var(--text-dim);
 `
 
 const UploadButton = styled.label`
-  background: white;
-  color: black;
+  position: relative;
+  background: rgba(92, 225, 242, 0.1);
+  color: var(--cyan);
   padding: 12px 0;
-  border: none;
-  border-radius: 8px;
+  border: 1px solid rgba(92, 225, 242, 0.4);
+  border-radius: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 13px;
-  transition: all 0.2s ease;
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   width: 100%;
   gap: 8px;
 
   &:hover {
-    background: #f0f0f0;
-    transform: scale(1.02);
+    background: rgba(92, 225, 242, 0.18);
+    box-shadow: 0 0 24px -6px rgba(92, 225, 242, 0.55);
   }
 
   &:active {
     transform: scale(0.98);
   }
+
+  &:focus-within {
+    outline: 2px solid var(--cyan);
+    outline-offset: 2px;
+  }
 `
 
 const HiddenInput = styled.input`
-  display: none;
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
 `
 
 const Badge = styled.div`
   display: inline-block;
-  padding: 4px 8px;
-  background: rgba(255, 255, 255, 0.1);
+  padding: 3px 9px;
+  background: rgba(92, 225, 242, 0.08);
   border-radius: 100px;
+  font-family: var(--mono);
   font-size: 10px;
-  font-weight: 600;
-  color: #888;
+  letter-spacing: 0.1em;
+  color: var(--cyan);
   margin-bottom: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line);
 `
 
 const ErrorMessage = styled.div`
   margin-top: 10px;
   padding: 8px 12px;
-  background: rgba(220, 50, 50, 0.15);
-  border: 1px solid rgba(220, 50, 50, 0.3);
-  border-radius: 6px;
+  background: rgba(255, 107, 129, 0.1);
+  border: 1px solid rgba(255, 107, 129, 0.35);
+  border-radius: 8px;
   font-size: 12px;
-  color: #ff8080;
+  color: #ff9aaa;
   line-height: 1.4;
 `
 
-const SaveBar = styled.div`
+const SaveBar = styled.div.attrs({ className: 'glass' })`
   position: fixed;
   bottom: 32px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 20;
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
   align-items: center;
   padding: 10px 14px;
-  background: rgba(15, 15, 15, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  max-width: calc(100vw - 32px);
   border-radius: 14px;
-  backdrop-filter: blur(20px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
   animation: rise 0.35s ease;
 
   @keyframes rise {
@@ -166,20 +175,21 @@ const SaveBar = styled.div`
 `
 
 const SaveButton = styled.button`
-  background: linear-gradient(180deg, #4ade80, #22c55e);
-  color: #052e12;
+  background: linear-gradient(180deg, var(--cyan), var(--cyan-deep));
+  color: #03141a;
   border: none;
   padding: 10px 20px;
-  border-radius: 9px;
-  font-family: inherit;
-  font-weight: 700;
-  font-size: 13px;
+  border-radius: 10px;
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.04em;
   cursor: pointer;
-  transition: transform 0.15s ease, filter 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 
   &:hover:not(:disabled) {
     transform: scale(1.03);
-    filter: brightness(1.05);
+    box-shadow: 0 0 22px -4px rgba(92, 225, 242, 0.7);
   }
 
   &:disabled {
@@ -189,26 +199,31 @@ const SaveButton = styled.button`
 `
 
 const BackButton = styled.button`
-  background: rgba(255, 255, 255, 0.08);
-  color: #ddd;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--glass-strong);
+  color: var(--text);
+  border: 1px solid var(--line);
   padding: 10px 16px;
-  border-radius: 9px;
-  font-family: inherit;
-  font-weight: 600;
-  font-size: 13px;
+  border-radius: 10px;
+  font-family: var(--mono);
+  font-size: 12px;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.16);
+    background: rgba(96, 168, 200, 0.16);
+    border-color: rgba(120, 214, 240, 0.35);
   }
 `
 
 const SaveHint = styled.span`
-  font-size: 12px;
-  color: #9a9a9a;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-faint);
   padding-left: 4px;
+
+  @media (max-width: 600px) {
+    display: none;
+  }
 `
 
 const ALLOWED_TYPES = new Set([
@@ -244,7 +259,7 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState(null)
-  const [dpr, setDpr] = useState(1.5)
+  const [dpr, setDpr] = useState(() => Math.min(1.5, window.devicePixelRatio || 1))
 
   const images = useAppStore((s) => s.images)
   const setImages = useAppStore((s) => s.setImages)
@@ -355,9 +370,10 @@ function App() {
   return (
     <>
       <GlobalStyle />
-      <UIContainer>
+      <Boot />
+      <UIContainer $dim={!!selectedImage}>
         <Card>
-          <Badge>v1.0</Badge>
+          <Badge>PRECIADO TECH // v1.1</Badge>
           <Title>CRT Album</Title>
           <Description>
             Upload your photos and view them on a retro CRT. Drag the cursor on
@@ -403,7 +419,7 @@ function App() {
         <SaveBar>
           <BackButton onClick={closePhoto}>← Back</BackButton>
           <SaveButton onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving…' : '💾 Save with CRT effect'}
+            {saving ? 'Saving…' : 'Save with CRT effect'}
           </SaveButton>
           <SaveHint>Exports a PNG with the CRT look applied</SaveHint>
         </SaveBar>
@@ -412,6 +428,7 @@ function App() {
       <Canvas
         shadows
         dpr={dpr}
+        performance={{ min: 0.6 }}
         camera={{ position: [0, 0.5, 4], fov: 50 }}
         style={{
           position: 'fixed',
@@ -425,26 +442,20 @@ function App() {
           antialias: true,
           powerPreference: 'high-performance',
           toneMapping: ACESFilmicToneMapping,
-          toneMappingExposure: 1.4,
+          toneMappingExposure: 1.25,
           stencil: false,
         }}
       >
         {/* Adaptive resolution: back off DPR under load, restore when smooth */}
         <PerformanceMonitor
-          onIncline={() => setDpr(Math.min(2, window.devicePixelRatio))}
-          onDecline={() => setDpr(1)}
+          onIncline={() => setDpr(Math.min(1.75, window.devicePixelRatio))}
+          onDecline={() => setDpr(0.85)}
         >
           <Suspense fallback={null}>
             <Scene uploadedImages={images} />
           </Suspense>
         </PerformanceMonitor>
       </Canvas>
-      <Loader
-        containerStyles={{ background: '#050505' }}
-        innerStyles={{ background: '#333', width: 200, height: 2 }}
-        barStyles={{ background: 'white', height: 2 }}
-        dataStyles={{ display: 'none' }}
-      />
     </>
   )
 }
