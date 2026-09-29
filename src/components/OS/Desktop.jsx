@@ -16,6 +16,9 @@ function getFormattedTime() {
   })
 }
 
+// The cursor sits at z=2 (camera z=5); pre-shrink so it lands exactly under the pointer.
+const CURSOR_K = (5 - 2) / 5
+
 /** Bliss-style wallpaper drawn in a single fragment shader — one draw call
  *  instead of the previous nine layered planes. */
 const WallpaperShader = {
@@ -119,8 +122,8 @@ export default function Desktop() {
     const p = cursorToOS(cursor)
 
     if (cursorRef.current) {
-      cursorRef.current.position.x = p.x
-      cursorRef.current.position.y = p.y
+      cursorRef.current.position.x = p.x * CURSOR_K
+      cursorRef.current.position.y = p.y * CURSOR_K
     }
 
     // Wallpaper rain is frozen under reduced motion.
@@ -153,7 +156,7 @@ export default function Desktop() {
       {windowMounted && <Window />}
 
       {/* Cursor */}
-      <group ref={cursorRef} position={[0, 0, 2]}>
+      <group ref={cursorRef} position={[0, 0, 2]} scale={CURSOR_K}>
         <mesh rotation={[0, 0, Math.PI / 4]}>
           <coneGeometry args={[0.08, 0.25, 3]} />
           <meshBasicMaterial color="#5ce1f2" depthTest={false} />

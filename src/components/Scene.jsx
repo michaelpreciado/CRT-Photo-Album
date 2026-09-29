@@ -26,7 +26,7 @@ function poseFor(mode, aspect) {
   const fit = (width) => width / (2 * TAN_HALF_FOV * aspect)
   const portrait = Math.max(0, 1 - aspect) // 0 on landscape .. ~0.55 on phones
   if (mode === 'desktop') {
-    const z = Math.max(4, fit(3.05))
+    const z = Math.max(4, fit(2.85))
     _pos.set(0, 0.5 + portrait * 0.5, z)
     _target.set(0, -portrait * 0.55, 0)
   } else if (mode === 'gallery') {

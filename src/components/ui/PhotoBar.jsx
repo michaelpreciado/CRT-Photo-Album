@@ -35,7 +35,14 @@ export default function PhotoBar({ saving, onSave }) {
         </button>
       </div>
       <button className="btn primary" onClick={onSave} disabled={saving}>
-        {saving ? 'Saving...' : 'Save with CRT effect'}
+        {saving ? (
+          'Saving...'
+        ) : (
+          <>
+            <span className="long">Save with CRT effect</span>
+            <span className="short">Save PNG</span>
+          </>
+        )}
       </button>
     </div>
   )

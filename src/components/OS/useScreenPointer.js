@@ -7,7 +7,6 @@ import { screenClick } from './actions'
 
 const TAP_SLOP = 0.02 // uv units a pointer may travel and still count as a tap
 const SWIPE_MIN = 0.16
-const SWIPE_MAX_MS = 700
 
 // The CRT shader samples the OS texture through barrel distortion, so a
 // pointer at screen position `s` must be drawn at curve(s) for the cursor to
@@ -57,7 +56,7 @@ export function useScreenPointer() {
         e.stopPropagation()
         if (!e.uv) return
         writeCursor(e.uv)
-        drag.current = { id: e.pointerId, sx: e.uv.x, sy: e.uv.y, lx: e.uv.x, ly: e.uv.y, moved: 0, t: performance.now() }
+        drag.current = { id: e.pointerId, sx: e.uv.x, sy: e.uv.y, lx: e.uv.x, ly: e.uv.y, moved: 0 }
         try {
           e.target.setPointerCapture?.(e.pointerId)
         } catch {
@@ -67,17 +66,18 @@ export function useScreenPointer() {
       onPointerUp(e) {
         const d = drag.current
         drag.current = null
-        if (!d || d.id !== e.pointerId || !e.uv) return
+        if (!d || d.id !== e.pointerId) return
+        const ux = e.uv ? e.uv.x : d.lx // fall back to the last move if the hit test missed
+        const uy = e.uv ? e.uv.y : d.ly
         const s = useAppStore.getState()
         if (s.photoView.pinching) return
-        const dx = e.uv.x - d.sx
-        const dy = e.uv.y - d.sy
-        const quick = performance.now() - d.t < SWIPE_MAX_MS
+        const dx = ux - d.sx
+        const dy = uy - d.sy
         const zoomed = s.viewMode === 'photo' && s.photoView.zoom > 1.02
 
         if (d.moved < TAP_SLOP) {
           screenClick()
-        } else if (!zoomed && quick && Math.abs(dx) > SWIPE_MIN && Math.abs(dy) < Math.abs(dx) * 0.8) {
+        } else if (!zoomed && Math.abs(dx) > SWIPE_MIN && Math.abs(dy) < Math.abs(dx) * 0.8) {
           const dir = dx < 0 ? 1 : -1 // swipe left -> next
           if (s.viewMode === 'photo') s.stepPhoto(dir)
           else if (s.viewMode === 'gallery' && s.images.length > PAGE_SIZE) s.setPage(s.page + dir)

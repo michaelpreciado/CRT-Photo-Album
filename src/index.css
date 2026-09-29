@@ -289,6 +289,7 @@ button {
 .btn.primary:hover:not(:disabled) { background: linear-gradient(180deg, var(--cyan), var(--cyan-deep)); transform: scale(1.03); box-shadow: 0 0 22px -4px rgba(92, 225, 242, 0.7); }
 .btn:disabled { opacity: 0.6; cursor: wait; }
 .btn-group { display: inline-flex; gap: 4px; }
+.btn .short { display: none; }
 
 /* ---------- Photo toolbar ---------- */
 .savebar {
@@ -415,12 +416,13 @@ button {
   .hint { top: 56px; max-width: calc(100vw - 32px); }
   .hint-kbd { display: none; }
   .savebar { bottom: max(16px, env(safe-area-inset-bottom)); gap: 8px; padding: 8px 10px; }
+  .savebar .btn { padding: 9px 11px; }
+  .savebar .btn.icon { min-width: 34px; padding: 9px 8px; }
+  .btn .long { display: none; }
+  .btn .short { display: inline; }
   .fallback { padding: 20px 16px 120px; }
 }
 @media (pointer: coarse) { .hint-kbd { display: none; } }
-@media (max-width: 420px) {
-  .savebar .btn { padding: 10px 12px; }
-}
 
 /* ---------- Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {

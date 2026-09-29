@@ -19,7 +19,7 @@ const PERSP = (5 - 1.5) / 5
 // Drawn from two bars so it stays crisp and independent of font glyph coverage.
 function Chevron({ x, dir }) {
   return (
-    <group position={[x, 0.1, 0.35]} scale={[dir, 1, 1]}>
+    <group position={[x, 0.1, 0.35]} scale={[-dir, 1, 1]}>
       <mesh position={[0.02, 0.11, 0]} rotation={[0, 0, Math.PI / 4]}>
         <planeGeometry args={[0.34, 0.06]} />
         <meshBasicMaterial color="#5ce1f2" transparent opacity={0.6} />
