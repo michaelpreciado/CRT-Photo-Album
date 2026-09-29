@@ -8,6 +8,7 @@ import Desk from './Desk'
 import CRTMonitor from './CRTMonitor'
 import GlyphField from './GlyphField'
 import DustMotes from './DustMotes'
+import GlowPlane from './GlowPlane'
 import { useAppStore } from '../store/useAppStore'
 import { useQuality } from './quality'
 
@@ -182,7 +183,7 @@ function LightingRig() {
 // their glossy, glassy look.
 function Reflections() {
   return (
-    <Environment resolution={128} frames={1} environmentIntensity={0.55}>
+    <Environment resolution={128} frames={1} environmentIntensity={1.0}>
       <color attach="background" args={['#03060b']} />
       <Lightformer form="rect" intensity={2.4} color="#d6f3ff" position={[0, 6, 2]} rotation-x={Math.PI / 2} scale={[12, 5, 1]} />
       <Lightformer form="rect" intensity={2.2} color="#5ce1f2" position={[-6, 1.5, 3]} rotation-y={Math.PI / 2} scale={[7, 1.2, 1]} />
@@ -220,11 +221,14 @@ function Scene() {
       <LightingRig />
       {tier.env && <Reflections />}
       <Room />
+      {/* Cyan haze behind the monitor for depth, and screen light spilling on the desk */}
+      <GlowPlane position={[0, 1.2, -5]} size={[26, 13]} opacity={0.55} power={1.9} />
       <GlyphField reduced={reduced} />
       <DustMotes count={tier.dust} reduced={reduced} />
 
       <ParallaxGroup reduced={reduced}>
         <Desk />
+        <GlowPlane position={[0, 0.012, 1.7]} rotation={[-Math.PI / 2, 0, 0]} size={[5.4, 2.8]} opacity={0.75} power={1.5} />
         <CRTMonitor position={[0, 1.5, 0]} />
       </ParallaxGroup>
 

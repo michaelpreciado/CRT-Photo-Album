@@ -99,12 +99,12 @@ function CRTMonitor({ position }) {
 
       {/* Rear casing */}
       <RoundedBox args={[2.3, 2.1, 1.5]} radius={0.08} smoothness={3} position={[0, 0, -0.85]} castShadow receiveShadow>
-        <meshStandardMaterial ref={caseMatRef} color="#c4cdc9" roughness={0.5} metalness={0.06} />
+        <meshStandardMaterial ref={caseMatRef} color="#c4cdc9" roughness={0.45} metalness={0.06} envMapIntensity={1.8} />
       </RoundedBox>
 
       {/* Front bezel */}
       <RoundedBox args={[2.5, 2.3, 0.32]} radius={0.06} smoothness={3} position={[0, 0, 0.14]} castShadow>
-        <meshStandardMaterial ref={bezelMatRef} color="#d0d9d5" roughness={0.38} metalness={0.06} />
+        <meshStandardMaterial ref={bezelMatRef} color="#d0d9d5" roughness={0.3} metalness={0.08} envMapIntensity={2.2} />
       </RoundedBox>
 
       {/* Recessed screen surround */}

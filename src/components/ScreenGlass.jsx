@@ -42,7 +42,7 @@ const fragment = /* glsl */ `
     float smudge = (g - 0.5) * 0.008;
 
     vec3 tint = vec3(0.45, 0.88, 1.0);
-    vec3 col = tint * (box * 0.085 + strip * 0.1 + sheen * 0.05 + fres * 0.16) + smudge;
+    vec3 col = tint * (box * 0.13 + strip * 0.14 + sheen * 0.07 + fres * 0.2) + smudge;
     // rounded corners
     vec2 d = abs(vUv - 0.5) - vec2(0.5) + 0.02;
     float m = 1.0 - smoothstep(0.0, 0.02, length(max(d, 0.0)));

@@ -10,6 +10,7 @@ function getAllowedOrigin(req) {
         'http://localhost:3000',
         process.env.APP_URL,
         process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+        process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null,
     ].filter(Boolean))
     return allowed.has(origin) ? origin : null
 }
@@ -20,6 +21,7 @@ function getAllowedOrigin(req) {
  */
 export function handleCors(req, res) {
     const origin = getAllowedOrigin(req)
+    res.setHeader('Vary', 'Origin')
     if (origin) {
         res.setHeader('Access-Control-Allow-Origin', origin)
         res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
