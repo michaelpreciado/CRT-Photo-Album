@@ -204,7 +204,8 @@ export default function SceneCanvas() {
         toneMappingExposure: 1.25,
         stencil: false,
       }}
-      onCreated={({ gl }) => {
+      onCreated={({ gl, scene }) => {
+        window.__crtScene = scene
         window.__crtRenderer = gl // debugging / perf inspection
       }}
     >

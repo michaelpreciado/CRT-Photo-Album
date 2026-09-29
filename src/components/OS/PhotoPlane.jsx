@@ -53,7 +53,7 @@ function PhotoPlane({ url, width, height, fit = 'cover', maxSize = THUMB_SIZE, o
 
   if (status === 'error') {
     return (
-      <group>
+      <group key="error">
         <mesh>
           <planeGeometry args={[width, height]} />
           <meshBasicMaterial color="#1a0d12" />
@@ -67,15 +67,17 @@ function PhotoPlane({ url, width, height, fit = 'cover', maxSize = THUMB_SIZE, o
 
   if (status !== 'ready') {
     return (
-      <mesh>
+      <mesh key="loading">
         <planeGeometry args={[width, height]} />
         <meshBasicMaterial ref={shimmerRef} color="#5ce1f2" transparent opacity={0.12} />
       </mesh>
     )
   }
 
+  // Distinct keys matter: swapping a material without `map` for one with it
+  // in place would keep the old (map-less) shader program.
   return (
-    <mesh scale={[w / width, h / height, 1]}>
+    <mesh key="ready" scale={[w / width, h / height, 1]}>
       <planeGeometry args={[width, height]} />
       <meshBasicMaterial ref={matRef} map={texture} transparent opacity={0} toneMapped={false} />
     </mesh>

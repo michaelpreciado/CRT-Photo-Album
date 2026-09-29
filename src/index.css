@@ -10,6 +10,7 @@
   --line: rgba(120, 214, 240, 0.14);
   --glass: rgba(96, 168, 200, 0.05);
   --glass-strong: rgba(96, 168, 200, 0.09);
+  --glass-dark: rgba(5, 10, 16, 0.6);
   --blur: blur(22px) saturate(150%);
   --glow: 0 0 0 1px rgba(92, 225, 242, 0.1), 0 18px 60px -28px rgba(92, 225, 242, 0.42);
   --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -174,6 +175,13 @@ button {
 }
 .ui-card-wrap.dim { opacity: 0.15; }
 .ui-card-wrap.dim .card { pointer-events: none; }
+
+.card,
+.hint,
+.savebar,
+.toast {
+  background: linear-gradient(180deg, rgba(120, 214, 240, 0.06), transparent 60%), var(--glass-dark);
+}
 
 .card {
   padding: 22px;

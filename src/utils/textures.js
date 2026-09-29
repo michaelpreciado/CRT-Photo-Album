@@ -36,20 +36,16 @@ async function build(url, maxSize) {
   const w = img.naturalWidth
   const h = img.naturalHeight
   const scale = Math.min(1, maxSize / Math.max(w, h))
-  let source = img
-  let width = w
-  let height = h
-  if (scale < 1) {
-    width = Math.max(1, Math.round(w * scale))
-    height = Math.max(1, Math.round(h * scale))
-    const c = document.createElement('canvas')
-    c.width = width
-    c.height = height
-    const ctx = c.getContext('2d')
-    ctx.imageSmoothingQuality = 'high'
-    ctx.drawImage(img, 0, 0, width, height)
-    source = c
-  }
+  const width = Math.max(1, Math.round(w * scale))
+  const height = Math.max(1, Math.round(h * scale))
+  // Always go through a 2D canvas: it caps the size and gives WebGL a
+  // fully-decoded bitmap (uploading a still-decoding <img> can yield black).
+  const source = document.createElement('canvas')
+  source.width = width
+  source.height = height
+  const ctx = source.getContext('2d')
+  ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(img, 0, 0, width, height)
   const tex = new Texture(source)
   tex.colorSpace = SRGBColorSpace
   tex.generateMipmaps = true

@@ -16,6 +16,22 @@ const BASE_Y = 0.16
 // The viewer sits at z=1.5 (camera z=5): pre-shrink so children read 1:1 in OS units.
 const PERSP = (5 - 1.5) / 5
 
+// Drawn from two bars so it stays crisp and independent of font glyph coverage.
+function Chevron({ x, dir }) {
+  return (
+    <group position={[x, 0.1, 0.35]} scale={[dir, 1, 1]}>
+      <mesh position={[0.02, 0.11, 0]} rotation={[0, 0, Math.PI / 4]}>
+        <planeGeometry args={[0.34, 0.06]} />
+        <meshBasicMaterial color="#5ce1f2" transparent opacity={0.6} />
+      </mesh>
+      <mesh position={[0.02, -0.11, 0]} rotation={[0, 0, -Math.PI / 4]}>
+        <planeGeometry args={[0.34, 0.06]} />
+        <meshBasicMaterial color="#5ce1f2" transparent opacity={0.6} />
+      </mesh>
+    </group>
+  )
+}
+
 /** Fullscreen viewer: contain-fit, eased zoom + pan (wheel, pinch, keys, drag). */
 export default function PhotoView({ url }) {
   const images = useAppStore((s) => s.images)
@@ -76,22 +92,18 @@ export default function PhotoView({ url }) {
       </group>
 
       {/* Bottom HUD strip */}
-      <mesh position={[0, -SCREEN_HEIGHT / 2 + 0.16, 0.3]}>
-        <planeGeometry args={[SCREEN_WIDTH + 0.6, 0.42]} />
+      <mesh position={[0, -1.98, 0.3]}>
+        <planeGeometry args={[SCREEN_WIDTH * 2, 0.34]} />
         <meshBasicMaterial color="#03060a" />
       </mesh>
-      <Text font={OS_FONT} position={[0, -SCREEN_HEIGHT / 2 + 0.16, 0.35]} fontSize={0.13} color="#5ce1f2" anchorX="center" anchorY="middle">
+      <Text font={OS_FONT} position={[0, -1.98, 0.35]} fontSize={0.12} color="#5ce1f2" anchorX="center" anchorY="middle">
         {`${i >= 0 ? i + 1 : '-'} / ${images.length}    scroll or pinch to zoom    ${many ? 'arrows browse    ' : ''}esc back`}
       </Text>
 
       {many && (
         <>
-          <Text font={OS_FONT} position={[-SCREEN_WIDTH / 2 + 0.22, 0.1, 0.35]} fontSize={0.6} color="#5ce1f2" fillOpacity={0.55} anchorX="center" anchorY="middle">
-            {'<'}
-          </Text>
-          <Text font={OS_FONT} position={[SCREEN_WIDTH / 2 - 0.22, 0.1, 0.35]} fontSize={0.6} color="#5ce1f2" fillOpacity={0.55} anchorX="center" anchorY="middle">
-            {'>'}
-          </Text>
+          <Chevron x={-SCREEN_WIDTH / 2 + 0.3} dir={-1} />
+          <Chevron x={SCREEN_WIDTH / 2 - 0.3} dir={1} />
         </>
       )}
 

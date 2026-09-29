@@ -43,7 +43,8 @@ function CRTMonitor({ position }) {
   const pointer = useScreenPointer()
   const haloUniforms = useMemo(() => ({ uOpacity: { value: 0 } }), [])
 
-  useFrame((state, delta) => {
+  useFrame((state, rawDelta) => {
+    const delta = Math.min(rawDelta, 0.1)
     const t = state.clock.elapsedTime
     const booted = useAppStore.getState().booted
     if (booted && !poweredRef.current) {

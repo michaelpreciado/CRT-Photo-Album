@@ -38,7 +38,8 @@ export default function Window() {
     countRef.current = visible.length
   }, [visible.length])
 
-  useFrame((_, delta) => {
+  useFrame((_, rawDelta) => {
+    const delta = Math.min(rawDelta, 0.1) // a hitch must never skip the animation
     const { viewMode, cursor } = useAppStore.getState()
     const open = viewMode !== 'desktop'
 

@@ -128,8 +128,14 @@ function LightingRig() {
   const keyRef = useRef()
   const fillRef = useRef()
   const cursorLightRef = useRef()
+  const frame = useRef(0)
 
   useFrame((state, delta) => {
+    // The shadow map barely changes (only the subtle parallax tilt moves
+    // casters), so re-render it every 6th frame instead of every frame.
+    state.gl.shadowMap.autoUpdate = false
+    if (frame.current++ % 6 === 0) state.gl.shadowMap.needsUpdate = true
+
     const photo = useAppStore.getState().viewMode === 'photo' ? 1 : 0
     const damp = (light, [hi, lo]) => {
       if (!light) return
