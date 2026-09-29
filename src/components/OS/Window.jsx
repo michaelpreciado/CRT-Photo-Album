@@ -33,7 +33,8 @@ export default function Window({ clickTrigger, images }) {
   useFrame((_, delta) => {
     if (groupRef.current) {
       const s = groupRef.current.scale
-      s.x = s.y = s.z = Math.min(1, s.x + (1 - s.x) * Math.min(1, delta * 14) + delta * 0.5)
+      const k = 1 - Math.exp(-delta * 12)
+      s.x = s.y = s.z = Math.min(1, s.x + (1 - s.x) * k + delta * 0.15)
     }
 
     const { cursor, viewMode } = useAppStore.getState()
@@ -106,23 +107,23 @@ export default function Window({ clickTrigger, images }) {
         {/* Border */}
         <mesh position={[0, 0, 0.02]}>
           <planeGeometry args={[5.05, 3.55]} />
-          <meshBasicMaterial color="#0054e3" />
+          <meshBasicMaterial color="#5ce1f2" transparent opacity={0.45} />
         </mesh>
 
         {/* Body */}
         <mesh position={[0, 0, 0.03]}>
           <planeGeometry args={[5, 3.5]} />
-          <meshBasicMaterial color="#ece9d8" />
+          <meshBasicMaterial color="#08131b" />
         </mesh>
 
         {/* Title bar */}
         <mesh position={[0, 1.6, 0.04]}>
           <planeGeometry args={[4.9, 0.3]} />
-          <meshBasicMaterial color="#0054e3" />
+          <meshBasicMaterial color="#0d2431" />
         </mesh>
         <mesh position={[0, 1.68, 0.041]}>
           <planeGeometry args={[4.9, 0.12]} />
-          <meshBasicMaterial color="#4e98f7" transparent opacity={0.6} />
+          <meshBasicMaterial color="#5ce1f2" transparent opacity={0.08} />
         </mesh>
         <Text
         font={OS_FONT}
@@ -138,15 +139,15 @@ export default function Window({ clickTrigger, images }) {
         {/* Window controls */}
         <mesh position={[1.8, 1.6, 0.06]}>
           <planeGeometry args={[0.2, 0.2]} />
-          <meshBasicMaterial color="#3d8edb" />
+          <meshBasicMaterial color="#163a4a" />
         </mesh>
         <mesh position={[2.0, 1.6, 0.06]}>
           <planeGeometry args={[0.2, 0.2]} />
-          <meshBasicMaterial color="#3d8edb" />
+          <meshBasicMaterial color="#163a4a" />
         </mesh>
         <mesh position={[CLOSE_BTN.x, 1.6, 0.06]}>
           <planeGeometry args={[0.2, 0.2]} />
-          <meshBasicMaterial color={hovered === -2 ? '#ff4d5e' : '#e81123'} />
+          <meshBasicMaterial color={hovered === -2 ? '#ff6b81' : '#7a2f3d'} />
         </mesh>
         <Text
         font={OS_FONT}
@@ -162,7 +163,7 @@ export default function Window({ clickTrigger, images }) {
         {/* Content area */}
         <mesh position={[0, -0.15, 0.04]}>
           <planeGeometry args={[4.8, 3]} />
-          <meshBasicMaterial color="white" />
+          <meshBasicMaterial color="#050d14" />
         </mesh>
 
         {/* Gallery grid */}
@@ -175,7 +176,7 @@ export default function Window({ clickTrigger, images }) {
                 {isHovered && (
                   <mesh position={[0, -0.03, -0.01]}>
                     <planeGeometry args={[1.36, 1.12]} />
-                    <meshBasicMaterial color="#316ac5" transparent opacity={0.35} />
+                    <meshBasicMaterial color="#5ce1f2" transparent opacity={0.14} />
                   </mesh>
                 )}
                 <Image url={img} scale={isHovered ? [1.26, 0.945] : [1.2, 0.9]} />
@@ -183,7 +184,7 @@ export default function Window({ clickTrigger, images }) {
         font={OS_FONT}
                   position={[0, -0.58, 0]}
                   fontSize={0.11}
-                  color={isHovered ? '#0054e3' : 'black'}
+                  color={isHovered ? '#5ce1f2' : '#9db0c0'}
                   anchorX="center"
                 >
                   Image {i + 1}
@@ -193,13 +194,13 @@ export default function Window({ clickTrigger, images }) {
           })}
 
           {hiddenCount > 0 && (
-            <Text font={OS_FONT} position={[0, -1.35, 0]} fontSize={0.11} color="#666" anchorX="center">
+            <Text font={OS_FONT} position={[0, -1.35, 0]} fontSize={0.11} color="#67798a" anchorX="center">
               +{hiddenCount} more image{hiddenCount > 1 ? 's' : ''}
             </Text>
           )}
 
           {visibleImages.length === 0 && (
-            <Text font={OS_FONT} position={[0, 0, 0]} color="#666" fontSize={0.2} anchorX="center">
+            <Text font={OS_FONT} position={[0, 0, 0]} color="#67798a" fontSize={0.2} anchorX="center">
               No images uploaded
             </Text>
           )}
@@ -211,7 +212,7 @@ export default function Window({ clickTrigger, images }) {
         <group position={[0, 0, 1.5]}>
           <mesh>
             <planeGeometry args={[SCREEN_WIDTH + 0.6, SCREEN_HEIGHT + 0.6]} />
-            <meshBasicMaterial color="#050505" />
+            <meshBasicMaterial color="#03060a" />
           </mesh>
           <Image
             url={selectedImage}
@@ -222,7 +223,7 @@ export default function Window({ clickTrigger, images }) {
         font={OS_FONT}
             position={[0, -2.0, 0.1]}
             fontSize={0.15}
-            color="#9ab8ff"
+            color="#5ce1f2"
             anchorX="center"
           >
             Click screen to go back · Save button exports this photo
