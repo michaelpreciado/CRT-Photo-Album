@@ -3,15 +3,19 @@
  *
  * Everything here is single-pass so the screen costs one draw call: barrel
  * curvature, rounded-corner mask, aperture-grille phosphor triads, soft
- * scanlines, a cheap 5-tap bloom, chromatic aberration, rolling interference,
- * film grain, flicker and vignette. Heavier effects (multi-pass bloom via
- * postprocessing) were deliberately avoided to protect the 120 fps budget.
+ * scanlines, an 8-tap halation glow, chromatic aberration, rolling
+ * interference, film grain, flicker, vignette and a power-on collapse/expand.
+ * Multi-pass bloom (postprocessing) was deliberately avoided to protect the
+ * frame budget; `glowIntensity` = 0 skips the glow taps entirely (low tier).
  */
+export const CRT_CURVATURE = 0.16
+
 const CRTEffectShader = {
   uniforms: {
     tDiffuse: { value: null },
     time: { value: 0 },
-    curvature: { value: 0.16 },
+    curvature: { value: CRT_CURVATURE },
+    power: { value: 1.0 },
     scanlineIntensity: { value: 0.22 },
     scanlineCount: { value: 340.0 },
     maskIntensity: { value: 0.14 },
@@ -34,6 +38,7 @@ const CRTEffectShader = {
     uniform sampler2D tDiffuse;
     uniform float time;
     uniform float curvature;
+    uniform float power;
     uniform float scanlineIntensity;
     uniform float scanlineCount;
     uniform float maskIntensity;
@@ -72,6 +77,24 @@ const CRTEffectShader = {
         return;
       }
 
+      // Power-on: a bright line blooms out horizontally, then the picture
+      // unrolls vertically from it (classic tube warm-up).
+      float pw = clamp(power, 0.0, 1.0);
+      float lineGlow = 0.0;
+      if (pw < 1.0) {
+        float hw = smoothstep(0.0, 0.25, pw);
+        float vh = mix(0.008, 1.0, smoothstep(0.22, 0.92, pw));
+        vec2 q = uv - 0.5;
+        float inX = 1.0 - smoothstep(hw * 0.5 - 0.02, hw * 0.5 + 0.02, abs(q.x));
+        lineGlow = inX * exp(-abs(q.y) * mix(220.0, 30.0, pw)) * (1.0 - smoothstep(0.55, 0.95, pw));
+        if (abs(q.y) > vh * 0.5) {
+          gl_FragColor = vec4(vec3(0.55, 0.95, 1.0) * lineGlow * 1.4 * mask, 1.0);
+          return;
+        }
+        uv.y = 0.5 + q.y / vh;
+        uv.x = 0.5 + q.x / max(hw, 0.05);
+      }
+
       // Subtle horizontal jitter + occasional rolling interference band
       float band = sin(uv.y * 12.0 - time * 2.2);
       float interference = smoothstep(0.985, 1.0, band) * interferenceIntensity;
@@ -87,14 +110,21 @@ const CRTEffectShader = {
       float b = texture2D(tDiffuse, uv - shift).b;
       vec3 color = vec3(r, base.g, b);
 
-      // Cheap 4-tap glow — softens highlights like phosphor bloom
-      vec2 gs = vec2(0.0035, 0.0045);
-      vec3 glow = texture2D(tDiffuse, uv + vec2(gs.x, 0.0)).rgb
-                + texture2D(tDiffuse, uv - vec2(gs.x, 0.0)).rgb
-                + texture2D(tDiffuse, uv + vec2(0.0, gs.y)).rgb
-                + texture2D(tDiffuse, uv - vec2(0.0, gs.y)).rgb;
-      glow *= 0.25;
-      color += glow * glow * glowIntensity * 0.35;
+      // Halation: two rings of taps (near + wide) soften highlights like
+      // phosphor bloom. Skipped entirely when glowIntensity is 0.
+      if (glowIntensity > 0.0) {
+        vec2 gs = vec2(0.0035, 0.0045);
+        vec3 near = texture2D(tDiffuse, uv + vec2(gs.x, 0.0)).rgb
+                  + texture2D(tDiffuse, uv - vec2(gs.x, 0.0)).rgb
+                  + texture2D(tDiffuse, uv + vec2(0.0, gs.y)).rgb
+                  + texture2D(tDiffuse, uv - vec2(0.0, gs.y)).rgb;
+        vec3 wide = texture2D(tDiffuse, uv + gs * vec2(2.4, 2.4)).rgb
+                  + texture2D(tDiffuse, uv + gs * vec2(-2.4, 2.4)).rgb
+                  + texture2D(tDiffuse, uv + gs * vec2(2.4, -2.4)).rgb
+                  + texture2D(tDiffuse, uv - gs * vec2(2.4, 2.4)).rgb;
+        vec3 glow = near * 0.16 + wide * 0.09;
+        color += glow * glow * glowIntensity * 0.9 + glow * glowIntensity * 0.08;
+      }
 
       // Soft scanlines — sine profile, intensity dips on bright pixels so
       // highlights read as blooming over the lines
@@ -126,8 +156,12 @@ const CRTEffectShader = {
       // Flicker (mains hum + slow drift)
       color *= 1.0 - flickerIntensity * (0.5 + 0.5 * sin(time * 12.0)) * (0.6 + 0.4 * sin(time * 0.7));
 
+      // Phosphor tint: nudge toward the cyan/blue palette
+      color *= vec3(0.94, 1.0, 1.04);
+
       // Brightness compensation for mask/scanline losses
       color *= brightness;
+      color += vec3(0.55, 0.95, 1.0) * lineGlow * 1.2;
 
       gl_FragColor = vec4(color * mask, 1.0);
     }

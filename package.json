@@ -16,10 +16,8 @@
     "@vercel/blob": "^2.0.0",
     "@vercel/postgres": "^0.10.0",
     "maath": "^0.10.8",
-    "postprocessing": "^6.38.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "styled-components": "^6.1.19",
     "three": "^0.181.1",
     "zustand": "^5.0.14"
   },
