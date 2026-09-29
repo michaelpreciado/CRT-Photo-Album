@@ -4,7 +4,9 @@ import { useFrame } from '@react-three/fiber'
 import FolderIcon from './FolderIcon'
 import Window from './Window'
 import { useAppStore } from '../../store/useAppStore'
-import { SCREEN_WIDTH, SCREEN_HEIGHT, OS_FONT } from './constants'
+import { OS_FONT } from './constants'
+import { FOLDER_POS, cursorToOS, overFolder } from './layout'
+import { useReducedMotion } from '../../hooks/useReducedMotion'
 
 function getFormattedTime() {
   return new Date().toLocaleTimeString('en-US', {
@@ -14,8 +16,8 @@ function getFormattedTime() {
   })
 }
 
-const FOLDER_POS = { x: -2.15, y: 1.55 }
-const FOLDER_HIT_RADIUS = 0.5
+// The cursor sits at z=2 (camera z=5); pre-shrink so it lands exactly under the pointer.
+const CURSOR_K = (5 - 2) / 5
 
 /** Bliss-style wallpaper drawn in a single fragment shader — one draw call
  *  instead of the previous nine layered planes. */
@@ -90,12 +92,13 @@ const WallpaperShader = {
   `,
 }
 
-export default function Desktop({ clickTrigger, uploadedImages }) {
+export default function Desktop() {
   const [time, setTime] = useState(getFormattedTime)
   const [folderHighlighted, setFolderHighlighted] = useState(false)
 
-  const viewMode = useAppStore((s) => s.viewMode)
-  const isWindowOpen = viewMode !== 'desktop'
+  const windowMounted = useAppStore((s) => s.windowMounted)
+  const imageCount = useAppStore((s) => s.images.length)
+  const reduced = useReducedMotion()
 
   const cursorRef = useRef()
   const wallpaperRef = useRef()
@@ -115,43 +118,25 @@ export default function Desktop({ clickTrigger, uploadedImages }) {
   // Cursor + hover run imperatively every frame; React state only changes
   // when the hover boolean actually flips.
   useFrame((state) => {
-    const { cursor } = useAppStore.getState()
-    const cx = cursor.x * (SCREEN_WIDTH / 2)
-    const cy = cursor.y * (SCREEN_HEIGHT / 2)
+    const { cursor, viewMode } = useAppStore.getState()
+    const p = cursorToOS(cursor)
 
     if (cursorRef.current) {
-      cursorRef.current.position.x = cx
-      cursorRef.current.position.y = cy
+      cursorRef.current.position.x = p.x * CURSOR_K
+      cursorRef.current.position.y = p.y * CURSOR_K
     }
 
+    // Wallpaper rain is frozen under reduced motion.
     if (wallpaperRef.current) {
-      wallpaperRef.current.uniforms.time.value = state.clock.elapsedTime
+      wallpaperRef.current.uniforms.time.value = reduced ? 3.7 : state.clock.elapsedTime
     }
 
-    const over =
-      !isWindowOpen &&
-      Math.abs(cx - FOLDER_POS.x) < FOLDER_HIT_RADIUS &&
-      Math.abs(cy - FOLDER_POS.y) < FOLDER_HIT_RADIUS
+    const over = viewMode === 'desktop' && overFolder(p)
     if (over !== highlightedRef.current) {
       highlightedRef.current = over
       setFolderHighlighted(over)
     }
   })
-
-  // Fires only on click events (clickTrigger changes).
-  useEffect(() => {
-    if (clickTrigger === 0) return
-    const { viewMode: mode, cursor, openGallery } = useAppStore.getState()
-    if (mode !== 'desktop') return
-
-    const cx = cursor.x * (SCREEN_WIDTH / 2)
-    const cy = cursor.y * (SCREEN_HEIGHT / 2)
-    const dx = cx - FOLDER_POS.x
-    const dy = cy - FOLDER_POS.y
-    if (Math.sqrt(dx * dx + dy * dy) < FOLDER_HIT_RADIUS) {
-      openGallery()
-    }
-  }, [clickTrigger])
 
   return (
     <group>
@@ -164,15 +149,14 @@ export default function Desktop({ clickTrigger, uploadedImages }) {
       <FolderIcon
         position={[FOLDER_POS.x, FOLDER_POS.y, 0]}
         label="My Pictures"
+        count={imageCount}
         highlighted={folderHighlighted}
       />
 
-      {isWindowOpen && (
-        <Window clickTrigger={clickTrigger} images={uploadedImages} />
-      )}
+      {windowMounted && <Window />}
 
       {/* Cursor */}
-      <group ref={cursorRef} position={[0, 0, 2]}>
+      <group ref={cursorRef} position={[0, 0, 2]} scale={CURSOR_K}>
         <mesh rotation={[0, 0, Math.PI / 4]}>
           <coneGeometry args={[0.08, 0.25, 3]} />
           <meshBasicMaterial color="#5ce1f2" depthTest={false} />

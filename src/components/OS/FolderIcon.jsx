@@ -1,7 +1,8 @@
+import { memo } from 'react'
 import { Text } from '@react-three/drei'
 import { OS_FONT } from './constants'
 
-export default function FolderIcon({ position, label, highlighted }) {
+function FolderIcon({ position, label, highlighted, count }) {
   const scale = highlighted ? 1.08 : 1
   return (
     <group position={position} scale={scale}>
@@ -43,6 +44,13 @@ export default function FolderIcon({ position, label, highlighted }) {
       >
         {label}
       </Text>
+      {count > 0 && (
+        <Text font={OS_FONT} position={[0, -0.58, 0.02]} fontSize={0.1} color="#67798a" anchorX="center" anchorY="top">
+          {`${count} item${count === 1 ? '' : 's'}`}
+        </Text>
+      )}
     </group>
   )
 }
+
+export default memo(FolderIcon)

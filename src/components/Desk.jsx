@@ -5,9 +5,9 @@ export default function Desk() {
             <mesh receiveShadow position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
                 <planeGeometry args={[12, 8]} />
                 <meshStandardMaterial
-                    color="#0e1a24"
-                    roughness={0.35}
-                    metalness={0.5}
+                    color="#132a3a"
+                    roughness={0.28}
+                    metalness={0.55}
                 />
             </mesh>
 

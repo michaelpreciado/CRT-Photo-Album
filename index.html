@@ -3,18 +3,54 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>CRT Interactive Album</title>
+  <meta name="description" content="An interactive 3D CRT photo album by Preciado Tech. Upload photos, browse them on a glowing retro monitor, and save them with the CRT effect baked in." />
+  <meta name="theme-color" content="#04060a" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="author" content="Michael Preciado / Preciado Tech" />
+  <link rel="canonical" href="__SITE_URL__/" />
+
+  <!-- Icons + PWA -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="CRT Album" />
+
+  <!-- Open Graph / Twitter -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Preciado Tech" />
+  <meta property="og:title" content="CRT Interactive Album" />
+  <meta property="og:description" content="A 3D retro CRT photo album in a matrix-blue glass room. Upload, browse, zoom and export photos with a real CRT shader." />
+  <meta property="og:url" content="__SITE_URL__/" />
+  <meta property="og:image" content="__SITE_URL__/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="A glowing CRT monitor showing a photo album in a dark blue glass room." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="CRT Interactive Album" />
+  <meta name="twitter:description" content="A 3D retro CRT photo album in a matrix-blue glass room." />
+  <meta name="twitter:image" content="__SITE_URL__/og-image.png" />
+
+  <!-- Fonts load without blocking first paint (system fonts show until they arrive) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <meta name="theme-color" content="#04060a" />
-  <meta name="description" content="An interactive 3D CRT photo album by Preciado Tech." />
-  <title>CRT Interactive Album</title>
+  <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;500&display=swap" /></noscript>
+  <style>html,body{background:#04060a;margin:0}</style>
 </head>
 
 <body>
   <div id="root"></div>
+  <noscript>
+    <p style="font-family:system-ui,sans-serif;color:#9db0c0;padding:32px;max-width:520px">
+      CRT Interactive Album needs JavaScript to render its 3D room. Please enable JavaScript and reload.
+    </p>
+  </noscript>
   <script type="module" src="/src/main.jsx"></script>
 </body>
 

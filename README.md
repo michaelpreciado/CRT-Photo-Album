@@ -1,217 +1,142 @@
-# CRT Interactive Album 🖥️✨
+# CRT Interactive Album
 
-A stunning 3D interactive photo album featuring a retro CRT monitor in a beautifully lit room. Experience your photos in a nostalgic Windows XP environment with persistent cloud storage.
+A 3D photo album inside a glowing CRT monitor, in a matrix-blue glass room. Upload photos, browse them in a retro "My Pictures" window, zoom in, and export any photo as a PNG with the CRT look baked in.
 
-![CRT Album](https://img.shields.io/badge/version-1.0_RC-blue)
-![React](https://img.shields.io/badge/React-19.2.0-61dafb)
-![Three.js](https://img.shields.io/badge/Three.js-0.181.1-black)
-![Vercel](https://img.shields.io/badge/Deploy-Vercel-black)
+Built by Michael Preciado / Preciado Tech. React 19, React Three Fiber, Three.js, Vite. Deploys to Vercel (Postgres for metadata, Blob for files).
 
-## ✨ Features
+![React](https://img.shields.io/badge/React-19-61dafb) ![Three.js](https://img.shields.io/badge/Three.js-0.181-black) ![Vercel](https://img.shields.io/badge/Deploy-Vercel-black)
 
-- 🎨 **Stunning 3D Scene**: Realistic CRT monitor on a wooden desk with dramatic lighting
-- 🖼️ **Photo Gallery**: Upload and view your photos in a retro Windows XP interface
-- 🔍 **Cinematic Zoom**: Clicking a photo eases the camera into the screen while the room dims around the CRT frame
-- 💾 **Save with CRT Effect**: Export any photo as a PNG with the full CRT treatment (scanlines, phosphor mask, curvature) baked in
-- 🎭 **Authentic CRT Shader**: Aperture-grille phosphor triads, soft scanlines, barrel curvature, chromatic aberration, bloom, interference and flicker — all in a single pass
-- 🖱️ **Interactive**: Drag the cursor across the screen, click the folder to browse, click a photo to zoom
-- ⚡ **120 fps-minded**: Adaptive resolution, zero React re-renders on pointer move, single-draw-call wallpaper and screen, bounded render-target sizes
-- 💾 **Persistent Storage**: Images are saved to a cloud database and persist across sessions
-- 📱 **Mobile Optimized**: Fully responsive design that works on all devices
+## Highlights
 
-## 🚀 Quick Start
+- **CRT shader** in a single pass: barrel curvature, aperture-grille phosphor triads, scanlines, 8-tap halation glow, chromatic aberration, interference, grain, flicker and a power-on collapse/expand.
+- **Glass room**: procedural studio reflections (no HDR download), curved glass over the tube with soft-box and rim reflections, screen light spilling on the desk, dust motes drifting in the glow, a matrix glyph field, cursor-reactive lighting.
+- **Boot and power-on**: boot log, then the tube warms up with a bright line that unrolls into the desktop.
+- **Windowing**: the My Pictures window pops open with a small overshoot and shrinks away on close.
+- **Gallery**: paged grid (6 per page), keyboard focus ring, swipe to change page, per-image loading placeholders and error tiles.
+- **Photo viewer**: eased wheel / pinch / keyboard zoom anchored on the pointer, drag to pan, swipe or arrows to browse, on-screen prev/next zones, DOM toolbar for accessibility.
+- **Save with CRT effect**: full-resolution offscreen render of the shader, downloaded as PNG.
+- **Sound (optional)**: WebAudio-synthesised power-on, clicks and hum. Muted by default; the toggle (top right) remembers your choice.
+- **Resilient**: error boundary, WebGL-unavailable fallback (a plain accessible album with lightbox), GL context-loss notice, reduced-motion support, mobile layout.
 
-### Local Development
+## Controls
 
-1. **Clone the repository**
+| Where | Mouse | Touch | Keyboard |
+| --- | --- | --- | --- |
+| Desktop | Click the folder; drag to orbit | Tap the folder; drag to orbit | `Enter` / `O` opens My Pictures |
+| Gallery | Click a photo, `< prev` / `next >` | Tap a photo, swipe left/right for pages | Arrows move focus, `Enter` opens, `PageUp`/`PageDown` or `[` `]` change page, `Home`/`End`, `Esc` closes |
+| Photo | Wheel zoom, drag pan, click to go back, click screen edges for prev/next | Pinch zoom, drag pan, swipe to browse, tap to go back | `Left`/`Right` browse (pan when zoomed), `+` `-` zoom, `0` reset, `S` save, `Esc` back |
 
-   ```bash
-   git clone <your-repo-url>
-   cd CRTinteractiveAlbum
-   ```
+Drag and drop images anywhere on the page to upload them.
 
-2. **Install dependencies**
-
-   ```bash
-   npm install
-   ```
-
-3. **Run the development server**
-
-   ```bash
-   npm run dev
-   ```
-
-4. **Open your browser**
-   Navigate to `http://localhost:5173`
-
-### Local Development with Database
-
-To test with the full database functionality locally:
+## Quick start
 
 ```bash
-# Install Vercel CLI
+npm install
+npm run dev        # http://localhost:5173
+npm run lint
+npm run build      # production build in dist/
+npm run preview
+```
+
+Without the API the app still works: it shows sample photos and keeps uploads in memory for the session.
+
+### With the database and storage (optional)
+
+```bash
 npm i -g vercel
-
-# Link your project
 vercel link
-
-# Pull environment variables
 vercel env pull .env.local
-
-# Run dev server
-npm run dev
+npm run vercel-dev # serves the app and /api together
 ```
 
-## 📦 Tech Stack
+### URL parameters
 
-- **Frontend**: React 19, Three.js, React Three Fiber
-- **3D Graphics**: @react-three/fiber, @react-three/drei, @react-three/postprocessing
-- **Styling**: Styled Components
-- **Animation**: Framer Motion
-- **Database**: Vercel Postgres
-- **Storage**: Vercel Blob
-- **Build Tool**: Vite
-- **Deployment**: Vercel
+- `?quality=low|medium|high` pins the render quality tier (default: adaptive).
 
-## 🗄️ Database Structure
+## Performance
 
-The app uses Vercel Postgres to store image metadata:
+What was done, and the numbers behind it.
 
-```sql
-CREATE TABLE images (
-  id SERIAL PRIMARY KEY,
-  url TEXT NOT NULL,
-  filename TEXT,
-  uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+**Bundle / loading**
+
+| | Before | After |
+| --- | --- | --- |
+| JS on the critical path (raw / gzip) | ~1.29 MB / ~381 KB | ~224 KB / ~72 KB (+3 KB CSS) |
+| 3D stack | in the entry path | lazy chunks (`SceneCanvas` 397 KB + `three` 719 KB raw), fetched in parallel while the boot screen plays |
+| Exporter | in the entry path | lazy, loaded on first "Save" |
+| Dependencies | `postprocessing` (unused), `styled-components` | both removed; UI is plain CSS |
+
+**Render cost**
+
+- One draw call for the CRT screen and one for the wallpaper; about 30 draw calls in total.
+- Adaptive quality via drei `PerformanceMonitor` steps between three tiers (render scale, OS render-target size 1216x1024 / 1024x862 / 768x646, MSAA 4 / 2 / 0, shadows, dust motes, reflections, glow taps). Touch devices start at the middle tier.
+- Shadow map is re-rendered every 6th frame; contact shadows are baked once; the reflection cube map is rendered once.
+- The pointer is written to a mutable store and read in `useFrame`, so pointer movement never re-renders React. Upload UI state lives outside the 3D tree.
+- Frame deltas are clamped so a hitch never skips an animation.
+
+**Textures**
+
+- Photos are downscaled on a 2D canvas before upload to the GPU: 512 px for gallery thumbnails, 2048 px for the viewer, with mipmaps and anisotropic filtering.
+- Textures are cached and reference-counted; unused ones are disposed after a few seconds so large albums stay flat in memory.
+- Uploads are resized client-side (max 2560 px, WebP/JPEG) so phone photos stay under serverless body limits.
+
+## Accessibility and motion
+
+- `prefers-reduced-motion`: no camera flights, no window animation, frozen glyph rain, dust and wallpaper, no flicker or interference, instant power-on.
+- All controls have DOM equivalents (photo toolbar, hint bar, screen-reader announcements); focus rings are visible.
+- If WebGL is unavailable or the scene crashes, a 2D album with a keyboard-friendly lightbox takes over.
+
+## API
+
+All routes are Vercel serverless functions in `api/`. The contract is unchanged; errors are now consistent JSON: `{ "success": false, "code": "...", "error": "human readable" }`.
+
+| Route | Description |
+| --- | --- |
+| `GET /api/images` | List images (newest first, max 500). Returns `needsInit: true` if the table does not exist yet. |
+| `POST /api/upload` | Body `{ image: "data:image/...;base64,...", filename }`. Returns `{ success: true, url }`. |
+| `POST /api/init-db` | Create the table and seed sample images (protect with `INIT_SECRET`). |
+
+Upload validation: 400 `no_image` / `bad_body` / `empty`, 413 `too_large` (over 10 MB decoded), 415 `unsupported_type` / `signature_mismatch` (magic bytes must match the declared type), 502 `storage_failed`, 500 `db_failed` (the uploaded blob is deleted so nothing is orphaned). Blob names get a random suffix so identical filenames never collide.
+
+Note: Vercel caps request bodies at about 4.5 MB. The web client resizes large images before sending; direct API users should stay under that.
+
+## Configuration
+
+Copy `.env.example`. Vercel Postgres and Blob variables are set automatically when attached.
+
+| Variable | Purpose |
+| --- | --- |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob access |
+| `POSTGRES_*` | Vercel Postgres |
+| `APP_URL` | Extra allowed CORS origin |
+| `INIT_SECRET` | Require `X-Init-Secret` on `/api/init-db` |
+| `VITE_SITE_URL` | Absolute site URL for canonical / Open Graph tags (falls back to Vercel's production URL) |
+
+## Project structure
+
+```
+api/                  Serverless routes (upload, images, init-db, CORS)
+public/               Icons, manifest, OG image, pixel font
+src/
+  App.jsx             Shell: boot, lazy scene, error boundary, UI
+  hooks/              useAlbum (data + upload flow), useReducedMotion
+  store/              Zustand store (view mode, paging, focus, photo zoom)
+  components/
+    SceneCanvas.jsx   Canvas, adaptive quality, input bridge (keys, wheel, pinch)
+    Scene.jsx         Camera rig, lighting, reflections, room
+    CRTMonitor.jsx    Monitor, screen material, power-on
+    ScreenGlass.jsx   Curved glass reflections
+    DustMotes.jsx, GlyphField.jsx, GlowPlane.jsx
+    OS/               In-screen desktop, window, photo viewer, layout + hit testing
+    shaders/          CRT shader (also used by the exporter)
+    ui/               Upload card, hint bar, photo toolbar, sound toggle
+  utils/              textures, upload, sound, export, webgl detection
 ```
 
-Images are stored in Vercel Blob storage, with URLs saved in the database.
+## Icons, meta and PWA
 
-## 🌐 Deployment
+`public/` ships an SVG favicon, 192/512 PNG icons, a maskable icon, an Apple touch icon, a web manifest and a 1200x630 Open Graph image (a capture of the scene). `index.html` carries Open Graph and Twitter tags; the site URL is injected at build time (see `VITE_SITE_URL`).
 
-Deploy to Vercel with database support in minutes!
+## License
 
-**Quick Deploy:**
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=<your-repo-url>)
-
-**Manual Deployment:**
-
-See the comprehensive [DEPLOYMENT.md](./DEPLOYMENT.md) guide for detailed instructions on:
-
-- Setting up Vercel Postgres
-- Configuring Vercel Blob storage
-- Environment variables
-- Custom domains
-- Troubleshooting
-
-## 📁 Project Structure
-
-```
-CRTinteractiveAlbum/
-├── api/                    # Serverless API routes
-│   ├── upload.js          # Image upload endpoint
-│   ├── images.js          # Fetch images endpoint
-│   └── init-db.js         # Database initialization
-├── src/
-│   ├── components/        # React components
-│   │   ├── CRTMonitor.jsx # 3D CRT monitor
-│   │   ├── Scene.jsx      # Main 3D scene
-│   │   └── OS/            # Windows XP UI components
-│   ├── App.jsx            # Main app component
-│   └── main.jsx           # Entry point
-├── public/                # Static assets
-├── vercel.json            # Vercel configuration
-├── .env.example           # Environment variables template
-└── DEPLOYMENT.md          # Deployment guide
-```
-
-## 🎮 Usage
-
-1. **View Photos**: The app loads with sample images from the database
-2. **Upload Images**: Click the "Upload Images" button to add your own photos
-3. **Interact**: Drag the cursor on the CRT screen and click the "My Pictures" folder to open the gallery
-4. **Zoom In**: Click a photo — the camera glides toward the screen and the room dims so the image takes focus
-5. **Save**: Hit "Save with CRT effect" to download a PNG of the photo with the CRT overlay baked in
-6. **Persist**: All uploaded images are saved to the cloud and persist across sessions
-
-## 🔧 API Endpoints
-
-- `GET /api/images` - Fetch all images from database
-- `POST /api/upload` - Upload new image to Blob storage and database
-- `POST /api/init-db` - Initialize database with default images
-
-## 🎨 Customization
-
-### Modify Default Images
-
-Edit `api/init-db.js` to change the default sample images:
-
-```javascript
-const defaultImages = [
-  'https://your-image-url.com/image1.jpg',
-  'https://your-image-url.com/image2.jpg',
-  // Add more...
-];
-```
-
-### Adjust 3D Scene
-
-Modify `src/components/Scene.jsx` to change:
-
-- Lighting
-- Camera position
-- Room environment
-- Monitor position
-
-### Customize CRT Effects
-
-Edit `src/components/shaders/CRTEffectShader.jsx` to adjust:
-
-- Scanline intensity
-- Screen curvature
-- Color effects
-
-## 🐛 Troubleshooting
-
-### Images not loading
-
-- Check that Vercel Postgres and Blob storage are properly configured
-- Verify environment variables in Vercel dashboard
-- Check browser console for API errors
-
-### Upload failing
-
-- Ensure file size is under 10MB
-- Check that `BLOB_READ_WRITE_TOKEN` is set
-- Verify API route is accessible
-
-### 3D scene not rendering
-
-- Clear browser cache
-- Check for WebGL support in your browser
-- Verify Three.js dependencies are installed
-
-## 📄 License
-
-MIT License - feel free to use this project for personal or commercial purposes!
-
-## 🙏 Acknowledgments
-
-- Built with [React Three Fiber](https://docs.pmnd.rs/react-three-fiber)
-- Inspired by retro computing aesthetics
-- Sample images from [Picsum](https://picsum.photos)
-
-## 🤝 Contributing
-
-Contributions are welcome! Feel free to:
-
-- Report bugs
-- Suggest new features
-- Submit pull requests
-
----
-
-Made with ❤️ and nostalgia for the CRT era
+MIT
