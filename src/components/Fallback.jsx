@@ -20,6 +20,10 @@ export default function Fallback({ reason = 'nowebgl', onRetry }) {
   const images = useAppStore((s) => s.images)
   const [open, setOpen] = useState(-1)
   const copy = COPY[reason] ?? COPY.error
+  const setSceneReady = useAppStore((s) => s.setSceneReady)
+
+  // There is no scene to wait for — let the boot overlay finish.
+  useEffect(() => setSceneReady(), [setSceneReady])
 
   useEffect(() => {
     if (open < 0) return
