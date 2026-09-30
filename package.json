@@ -1,36 +1,27 @@
 {
   "name": "crt-interactive-album",
   "private": true,
-  "version": "1.2.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit && eslint api vite.config.js",
     "preview": "vite preview",
     "vercel-dev": "vercel dev"
   },
   "dependencies": {
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.4.0",
     "@vercel/blob": "^2.0.0",
     "@vercel/postgres": "^0.10.0",
-    "maath": "^0.10.8",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "three": "^0.181.1",
-    "zustand": "^5.0.14"
+    "three": "^0.181.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.2",
     "@types/three": "^0.181.0",
-    "@vitejs/plugin-react": "^5.1.0",
     "eslint": "^9.39.1",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "typescript": "^5.9.3",
     "vite": "^7.2.2"
   },
   "description": "Interactive 3D CRT photo album by Preciado Tech"

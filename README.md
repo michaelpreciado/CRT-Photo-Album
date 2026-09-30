@@ -1,141 +1,103 @@
-# CRT Interactive Album
+# CRT Album
 
-A 3D photo album inside a glowing CRT monitor, in a matrix-blue glass room. Upload photos, browse them in a retro "My Pictures" window, zoom in, and export any photo as a PNG with the CRT look baked in.
+A beige 90s CRT on a walnut desk, in a dark room lit by a single pendant lamp. Upload photos, browse them on the tube, and save any of them with the CRT look baked in.
 
-Built by Michael Preciado / Preciado Tech. React 19, React Three Fiber, Three.js, Vite. Deploys to Vercel (Postgres for metadata, Blob for files).
+![CRT Album](public/og-image.png)
 
-![React](https://img.shields.io/badge/React-19-61dafb) ![Three.js](https://img.shields.io/badge/Three.js-0.181-black) ![Vercel](https://img.shields.io/badge/Deploy-Vercel-black)
+Built by Michael Preciado / Preciado Tech with **TypeScript, Three.js (WebGL2) and hand-written GLSL**. No UI framework: the render loop, input and post-processing are all under direct control, which is what keeps the lighting affordable on phones. Deploys to Vercel (Postgres for metadata, Blob for files).
 
-## Highlights
+## What's on screen
 
-- **CRT shader** in a single pass: barrel curvature, aperture-grille phosphor triads, scanlines, 8-tap halation glow, chromatic aberration, interference, grain, flicker and a power-on collapse/expand.
-- **Glass room**: procedural studio reflections (no HDR download), curved glass over the tube with soft-box and rim reflections, screen light spilling on the desk, dust motes drifting in the glow, a matrix glyph field, cursor-reactive lighting.
-- **Boot and power-on**: boot log, then the tube warms up with a bright line that unrolls into the desktop.
-- **Windowing**: the My Pictures window pops open with a small overshoot and shrinks away on close.
-- **Gallery**: paged grid (6 per page), keyboard focus ring, swipe to change page, per-image loading placeholders and error tiles.
-- **Photo viewer**: eased wheel / pinch / keyboard zoom anchored on the pointer, drag to pan, swipe or arrows to browse, on-screen prev/next zones, DOM toolbar for accessibility.
-- **Save with CRT effect**: full-resolution offscreen render of the shader, downloaded as PNG.
-- **Sound (optional)**: WebAudio-synthesised power-on, clicks and hum. Muted by default; the toggle (top right) remembers your choice.
-- **Resilient**: error boundary, WebGL-unavailable fallback (a plain accessible album with lightbox), GL context-loss notice, reduced-motion support, mobile layout.
+**Light and shadow**
+- One warm pendant lamp is the only real light. It casts **PCSS soft shadows** (contact-hardening: sharp where the keyboard touches the desk, soft further away), injected into Three's shadow chunk.
+- **Raymarched volumetric light**: each pixel marches through the lamp's cone and tests the shadow map, so the haze is only lit where light actually travels and the monitor casts a dark shaft through it.
+- Dust motes drift through the beam and glint only inside the cone.
+- The tube lights the room: a rect-area light in front of the glass takes its colour and brightness from what's on screen.
 
-## Controls
+**Reflections**
+- The lacquered desk has a **planar reflection** (mirrored camera + oblique clip plane) sampled through its roughness map, so glossy lacquer is sharp and worn patches blur. It's weighted by Fresnel, strongest at grazing angles.
+- The CRT glass is a separate additive layer that adds only specular reflections of the room.
+- A procedural dark-room environment map (lamp overhead, door-crack behind you) drives the reflections on plastic, ceramic and brass.
 
-| Where | Mouse | Touch | Keyboard |
+**Materials**: every texture is procedural and **baked on the GPU at load** (walnut boards with cathedral grain, pores and an old mug ring; orange-peel ABS; trowelled plaster; brushed aluminium; enamel). There are no image downloads, and the resolution follows the quality tier.
+
+**The tube**: one shader models the picture: barrel faceplate, Gaussian beam scanlines that fatten on bright content, aperture-grille phosphors, halation from the mip chain, convergence error, a rolling hum bar, flicker and a dot, line, raster power-on. Scanline and mask detail fade by screen-space frequency, so a small or distant screen never shows moiré.
+
+**Post**: HDR pipeline with MSAA, bloom, ACES tone mapping, then lens chromatic aberration, vignette and luminance-aware grain.
+
+## Navigation
+
+The screen runs a small photo OS drawn with Canvas2D and shown through the CRT shader. Fingers land on the exact pixel under them because pointers are ray-cast onto the faceplate and pushed through the same barrel mapping as the shader.
+
+| | Touch | Mouse / trackpad | Keyboard |
 | --- | --- | --- | --- |
-| Desktop | Click the folder; drag to orbit | Tap the folder; drag to orbit | `Enter` / `O` opens My Pictures |
-| Gallery | Click a photo, `< prev` / `next >` | Tap a photo, swipe left/right for pages | Arrows move focus, `Enter` opens, `PageUp`/`PageDown` or `[` `]` change page, `Home`/`End`, `Esc` closes |
-| Photo | Wheel zoom, drag pan, click to go back, click screen edges for prev/next | Pinch zoom, drag pan, swipe to browse, tap to go back | `Left`/`Right` browse (pan when zoomed), `+` `-` zoom, `0` reset, `S` save, `Esc` back |
+| Room | Drag to look around, pinch to move closer, tap the screen | Drag, scroll, click the screen (or scroll all the way in) | Arrows look, `Enter` walks up to the screen |
+| Gallery | Momentum scroll with rubber-band edges, tap a photo, tap outside the glass to step back | Scroll, click; hover highlights | Arrows move focus, `Enter` opens, `Esc` steps back |
+| Photo | Swipe to page (the photo follows your finger), pinch or double-tap to zoom, drag to pan, swipe down to close | Wheel zoom at the cursor, drag to pan, click the edges for prev/next | `←` `→`, `+` `-` `0`, `S` saves, `Esc` closes |
 
-Drag and drop images anywhere on the page to upload them.
+Photos open out of their thumbnail and shrink back into it. Drag and drop images anywhere to upload.
+
+## Mobile and performance
+
+- Three quality tiers (DPR cap, MSAA, shadow-map size, PCSS samples, reflection resolution, volumetric steps, dust count). Phones start at *medium*; the engine steps down if it can't hold about 40 fps. Use `?quality=low|medium|high` to pin a tier.
+- The shadow map is rendered once (the scene under the lamp is static). The reflection renders at 28–50% resolution.
+- The screen texture only re-uploads when the OS redraws. Full-size photos are kept only around the one being viewed.
+- The intro and UI entry chunk is about 16 KB. Three.js and the scene load in parallel while the intro plays, and every material is pre-compiled before the lamp turns on.
+- Safe-area insets, `100dvh`, no page zoom on double-tap, 44 px touch targets, and share-sheet export on phones.
+
+## Accessibility
+
+- `prefers-reduced-motion` turns off camera flights, lamp flicker, jitter, grain and dust.
+- The DOM controls (back, add, save, sound) are real buttons, and screen-reader announcements track the view.
+- Browsers without WebGL2 get a plain accessible album.
 
 ## Quick start
 
 ```bash
 npm install
 npm run dev        # http://localhost:5173
-npm run lint
-npm run build      # production build in dist/
+npm run lint       # tsc + eslint (api/)
+npm run build
 npm run preview
 ```
 
-Without the API the app still works: it shows sample photos and keeps uploads in memory for the session.
-
-### With the database and storage (optional)
+Without the API the app shows sample photos and keeps uploads on the device for the session. For the full stack:
 
 ```bash
-npm i -g vercel
-vercel link
-vercel env pull .env.local
-npm run vercel-dev # serves the app and /api together
+npm i -g vercel && vercel link && vercel env pull .env.local
+npm run vercel-dev
 ```
-
-### URL parameters
-
-- `?quality=low|medium|high` pins the render quality tier (default: adaptive).
-
-## Performance
-
-What was done, and the numbers behind it.
-
-**Bundle / loading**
-
-| | Before | After |
-| --- | --- | --- |
-| JS on the critical path (raw / gzip) | ~1.29 MB / ~381 KB | ~224 KB / ~72 KB (+3 KB CSS) |
-| 3D stack | in the entry path | lazy chunks (`SceneCanvas` 397 KB + `three` 719 KB raw), fetched in parallel while the boot screen plays |
-| Exporter | in the entry path | lazy, loaded on first "Save" |
-| Dependencies | `postprocessing` (unused), `styled-components` | both removed; UI is plain CSS |
-
-**Render cost**
-
-- One draw call for the CRT screen and one for the wallpaper; about 30 draw calls in total.
-- Adaptive quality via drei `PerformanceMonitor` steps between three tiers (render scale, OS render-target size 1216x1024 / 1024x862 / 768x646, MSAA 4 / 2 / 0, shadows, dust motes, reflections, glow taps). Touch devices start at the middle tier.
-- Shadow map is re-rendered every 6th frame; contact shadows are baked once; the reflection cube map is rendered once.
-- The pointer is written to a mutable store and read in `useFrame`, so pointer movement never re-renders React. Upload UI state lives outside the 3D tree.
-- Frame deltas are clamped so a hitch never skips an animation.
-
-**Textures**
-
-- Photos are downscaled on a 2D canvas before upload to the GPU: 512 px for gallery thumbnails, 2048 px for the viewer, with mipmaps and anisotropic filtering.
-- Textures are cached and reference-counted; unused ones are disposed after a few seconds so large albums stay flat in memory.
-- Uploads are resized client-side (max 2560 px, WebP/JPEG) so phone photos stay under serverless body limits.
-
-## Accessibility and motion
-
-- `prefers-reduced-motion`: no camera flights, no window animation, frozen glyph rain, dust and wallpaper, no flicker or interference, instant power-on.
-- All controls have DOM equivalents (photo toolbar, hint bar, screen-reader announcements); focus rings are visible.
-- If WebGL is unavailable or the scene crashes, a 2D album with a keyboard-friendly lightbox takes over.
 
 ## API
 
-All routes are Vercel serverless functions in `api/`. The contract is unchanged; errors are now consistent JSON: `{ "success": false, "code": "...", "error": "human readable" }`.
+Vercel serverless routes in `api/`. They are unchanged from v1.
 
 | Route | Description |
 | --- | --- |
-| `GET /api/images` | List images (newest first, max 500). Returns `needsInit: true` if the table does not exist yet. |
-| `POST /api/upload` | Body `{ image: "data:image/...;base64,...", filename }`. Returns `{ success: true, url }`. |
-| `POST /api/init-db` | Create the table and seed sample images (protect with `INIT_SECRET`). |
+| `GET /api/images` | List images (newest first, max 500). `needsInit: true` if the table is missing. |
+| `POST /api/upload` | `{ image: "data:image/...;base64,...", filename }` → `{ success, url }`. Validates size and type, including magic bytes. |
+| `POST /api/init-db` | Create the table (protect with `INIT_SECRET`). |
 
-Upload validation: 400 `no_image` / `bad_body` / `empty`, 413 `too_large` (over 10 MB decoded), 415 `unsupported_type` / `signature_mismatch` (magic bytes must match the declared type), 502 `storage_failed`, 500 `db_failed` (the uploaded blob is deleted so nothing is orphaned). Blob names get a random suffix so identical filenames never collide.
-
-Note: Vercel caps request bodies at about 4.5 MB. The web client resizes large images before sending; direct API users should stay under that.
+The client resizes photos before upload so they stay under Vercel's roughly 4.5 MB body limit.
 
 ## Configuration
 
-Copy `.env.example`. Vercel Postgres and Blob variables are set automatically when attached.
-
-| Variable | Purpose |
-| --- | --- |
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob access |
-| `POSTGRES_*` | Vercel Postgres |
-| `APP_URL` | Extra allowed CORS origin |
-| `INIT_SECRET` | Require `X-Init-Secret` on `/api/init-db` |
-| `VITE_SITE_URL` | Absolute site URL for canonical / Open Graph tags (falls back to Vercel's production URL) |
+See `.env.example`: `BLOB_READ_WRITE_TOKEN`, `POSTGRES_*`, `APP_URL`, `INIT_SECRET`, `VITE_SITE_URL`.
 
 ## Project structure
 
 ```
-api/                  Serverless routes (upload, images, init-db, CORS)
-public/               Icons, manifest, OG image, pixel font
+api/                 Serverless routes
 src/
-  App.jsx             Shell: boot, lazy scene, error boundary, UI
-  hooks/              useAlbum (data + upload flow), useReducedMotion
-  store/              Zustand store (view mode, paging, focus, photo zoom)
-  components/
-    SceneCanvas.jsx   Canvas, adaptive quality, input bridge (keys, wheel, pinch)
-    Scene.jsx         Camera rig, lighting, reflections, room
-    CRTMonitor.jsx    Monitor, screen material, power-on
-    ScreenGlass.jsx   Curved glass reflections
-    DustMotes.jsx, GlyphField.jsx, GlowPlane.jsx
-    OS/               In-screen desktop, window, photo viewer, layout + hit testing
-    shaders/          CRT shader (also used by the exporter)
-    ui/               Upload card, hint bar, photo toolbar, sound toggle
-  utils/              textures, upload, sound, export, webgl detection
+  main.ts            Boot: intro UI, album, lazy 3D experience, fallback
+  app/               Experience (scene assembly + render loop), input routing,
+                     album/upload flow, CRT export, WebAudio foley, fallback
+  core/              Quality tiers, PCSS, GPU texture baker, planar reflector,
+                     camera rig, volumetric + finishing post passes
+  scene/             Monitor, desk/walls/lamp/dust, props, procedural surfaces
+  screen/            CRT shader, Canvas2D photo OS, image decoding queue
+  ui/                DOM overlay (intro, HUD, hints, toasts, drop zone)
 ```
-
-## Icons, meta and PWA
-
-`public/` ships an SVG favicon, 192/512 PNG icons, a maskable icon, an Apple touch icon, a web manifest and a 1200x630 Open Graph image (a capture of the scene). `index.html` carries Open Graph and Twitter tags; the site URL is injected at build time (see `VITE_SITE_URL`).
 
 ## License
 

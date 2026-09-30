@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
 
 // Absolute URLs are required for og:image / canonical. Prefer an explicit
 // VITE_SITE_URL, else the Vercel-provided production/deployment host, else
@@ -17,18 +16,15 @@ const injectSiteUrl = () => ({
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), injectSiteUrl()],
+  plugins: [injectSiteUrl()],
   build: {
     target: 'es2020',
     rollupOptions: {
       output: {
-        // three is shared by the lazy scene chunk and the lazy exporter, so it
-        // gets its own long-cacheable file; everything else follows the
-        // dynamic imports (entry = React + UI, scene = R3F/drei/troika).
+        // three gets its own long-cacheable chunk; the entry (intro + UI)
+        // stays tiny and paints while the 3D stack downloads.
         manualChunks(id) {
-          if (!id.includes('node_modules')) return
           if (/node_modules\/three\//.test(id)) return 'three'
-          if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'react'
         },
       },
     },
